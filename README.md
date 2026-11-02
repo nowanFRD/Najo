@@ -86,7 +86,7 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
 - `minSdk` 26 (Android 8.0), `compileSdk`/`targetSdk` 36.
-- The Android build uses AGP 9's built-in Kotlin support and its own Gradle 9.1
+- The Android build uses AGP 9's built-in Kotlin support and its own Gradle 9.8
   wrapper, independent of the desktop build, so the two toolchains cannot
   interfere with each other.
 - The plan is stored in the app's private storage as `files/planner.json`
