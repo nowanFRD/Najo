@@ -53,7 +53,7 @@ import java.time.LocalDate
 
 /** Below this width (or height) the side panel folds away and the list takes the whole screen. */
 private val WideLayoutBreakpoint = 900.dp
-private val WideLayoutMinHeight = 560.dp
+private val WideLayoutMinHeight = 440.dp
 
 @Composable
 fun PlannerScreen(vm: PlannerViewModel) {
