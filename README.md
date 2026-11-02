@@ -10,7 +10,8 @@ runs as an **Android app** and a **desktop app**.
 ## Features
 
 - A day timeline split into **Morning / Afternoon / Evening**, with start time,
-  duration, priority and an optional note.
+  duration (quick presets or any custom length up to 24 hours), priority and an
+  optional note.
 - Add, edit, delete and tick off tasks; filter by **All / To do / Done**; clear
   finished tasks in one tap.
 - Progress ring, planned-vs-finished time, a **focus now / up next** card, and

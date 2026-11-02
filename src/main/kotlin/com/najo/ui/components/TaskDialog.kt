@@ -52,6 +52,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.isShiftPressed
@@ -67,6 +68,7 @@ import com.najo.model.Priority
 import com.najo.ui.theme.NajoPalette
 import com.najo.util.formatDuration
 import com.najo.util.formatTime
+import com.najo.util.parseCustomDuration
 import java.time.LocalTime
 
 private val DURATIONS = listOf(15, 30, 45, 60, 90, 120)
@@ -89,10 +91,17 @@ fun TaskEditorDialog(
     var hour by remember(initial) { mutableStateOf(startSeed / 60) }
     var minute by remember(initial) { mutableStateOf((startSeed % 60) / 5 * 5) }
     var duration by remember(initial) { mutableStateOf(initial?.durationMinutes ?: 30) }
+    val customSeed = remember(initial) {
+        initial?.durationMinutes?.takeIf { it !in DURATIONS }
+    }
+    var customMode by remember(initial) { mutableStateOf(customSeed != null) }
+    var customText by remember(initial) { mutableStateOf(customSeed?.toString().orEmpty()) }
     var priority by remember(initial) { mutableStateOf(initial?.priority ?: Priority.NORMAL) }
     var note by remember(initial) { mutableStateOf(initial?.note ?: "") }
     var showTitleError by remember { mutableStateOf(false) }
+    var showDurationError by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
+    val previewDuration = if (customMode) parseCustomDuration(customText) else duration
 
     LaunchedEffect(Unit) { focusRequester.requestFocus() }
 
@@ -102,11 +111,16 @@ fun TaskEditorDialog(
             showTitleError = true
             return
         }
+        val finalDuration = if (customMode) parseCustomDuration(customText) else duration
+        if (finalDuration == null) {
+            showDurationError = true
+            return
+        }
         onSave(
             TaskDraft(
                 title = cleaned,
                 startMinute = hour * 60 + minute,
-                durationMinutes = duration,
+                durationMinutes = finalDuration,
                 priority = priority,
                 note = note.trim(),
             ),
@@ -219,7 +233,9 @@ fun TaskEditorDialog(
                     )
                     Spacer(Modifier.width(16.dp))
                     Text(
-                        "Ends at ${formatTime(hour * 60 + minute + duration)}",
+                        previewDuration?.let {
+                            "Ends at ${formatTime(hour * 60 + minute + it)}"
+                        } ?: "Enter a duration",
                         style = MaterialTheme.typography.labelMedium,
                         color = colors.onSurfaceVariant,
                     )
@@ -235,10 +251,53 @@ fun TaskEditorDialog(
                     DURATIONS.forEach { value ->
                         SelectChip(
                             label = formatDuration(value),
-                            selected = duration == value,
-                            onClick = { duration = value },
+                            selected = !customMode && duration == value,
+                            onClick = {
+                                duration = value
+                                customMode = false
+                                showDurationError = false
+                            },
                         )
                     }
+                    SelectChip(
+                        label = "Custom",
+                        selected = customMode,
+                        onClick = {
+                            if (!customMode) customText = duration.toString()
+                            customMode = true
+                            showDurationError = false
+                        },
+                    )
+                }
+                if (customMode) {
+                    Spacer(Modifier.height(10.dp))
+                    OutlinedTextField(
+                        value = customText,
+                        onValueChange = {
+                            customText = it.filter(Char::isDigit).take(4)
+                            showDurationError = false
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        isError = showDurationError,
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Number,
+                            imeAction = ImeAction.Done,
+                        ),
+                        keyboardActions = KeyboardActions(onDone = { submit() }),
+                        shape = RoundedCornerShape(14.dp),
+                        label = { Text("Custom duration") },
+                        suffix = { Text("min") },
+                        supportingText = {
+                            Text(
+                                if (showDurationError) {
+                                    "Enter a length from 1 minute to 24 hours."
+                                } else {
+                                    "Anything from 1 minute to 24 hours."
+                                },
+                            )
+                        },
+                    )
                 }
 
                 Spacer(Modifier.height(18.dp))

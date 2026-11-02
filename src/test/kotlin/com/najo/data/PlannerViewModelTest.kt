@@ -180,4 +180,26 @@ class PlannerViewModelTest {
         assertEquals(315, stats.remainingMinutes)
         assertNotNull(stats.progress)
     }
+
+    @Test
+    fun `a custom block longer than two hours survives a save`() {
+        val vm = viewModel()
+        vm.openNewTask()
+        vm.saveDraft(
+            TaskDraft(
+                title = "Workshop",
+                startMinute = 18 * 60,
+                durationMinutes = 240,
+                priority = Priority.NORMAL,
+                note = "",
+            ),
+        )
+
+        assertEquals(240, vm.tasks.first { it.title == "Workshop" }.durationMinutes)
+        assertEquals(390 + 240, vm.stats().plannedMinutes)
+        assertEquals(
+            240,
+            store.load()!!.tasks.first { it.title == "Workshop" }.durationMinutes,
+        )
+    }
 }
