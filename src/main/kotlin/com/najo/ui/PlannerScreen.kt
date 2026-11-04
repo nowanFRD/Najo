@@ -97,7 +97,7 @@ fun PlannerScreen(vm: PlannerViewModel) {
             Spacer(
                 Modifier.height(
                     when {
-                        dense -> 8.dp
+                        dense -> 6.dp
                         compact -> 12.dp
                         else -> 16.dp
                     },
@@ -115,7 +115,7 @@ fun PlannerScreen(vm: PlannerViewModel) {
             Spacer(
                 Modifier.height(
                     when {
-                        dense -> 8.dp
+                        dense -> 6.dp
                         compact -> 12.dp
                         else -> 16.dp
                     },
@@ -124,8 +124,12 @@ fun PlannerScreen(vm: PlannerViewModel) {
 
             if (compact) {
                 if (overdue.isNotEmpty()) {
-                    MotivationBanner(overdue = overdue, onOpenTask = vm::openTask)
-                    Spacer(Modifier.height(if (dense) 8.dp else 10.dp))
+                    MotivationBanner(
+                        overdue = overdue,
+                        onOpenTask = vm::openTask,
+                        compact = dense,
+                    )
+                    Spacer(Modifier.height(if (dense) 6.dp else 10.dp))
                 }
                 FilterBar(
                     selected = vm.filter,

@@ -298,6 +298,7 @@ private fun WeekDots(today: LocalDate, lastStreakDay: LocalDate?, streak: Int) {
 fun MotivationBanner(
     overdue: List<PlanTask>,
     onOpenTask: (PlanTask) -> Unit,
+    compact: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     if (overdue.isEmpty()) return
@@ -329,40 +330,53 @@ fun MotivationBanner(
         Row(
             modifier = Modifier
                 .background(warning.copy(alpha = 0.07f))
-                .padding(horizontal = 12.dp, vertical = 10.dp),
+                .padding(
+                    horizontal = if (compact) 10.dp else 12.dp,
+                    vertical = if (compact) 7.dp else 10.dp,
+                ),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
                 modifier = Modifier
-                    .size(32.dp)
+                    .size(if (compact) 26.dp else 32.dp)
                     .clip(CircleShape)
                     .background(warning.copy(alpha = 0.14f)),
                 contentAlignment = Alignment.Center,
             ) {
-                SparkIcon(Modifier.size(17.dp), warning)
+                SparkIcon(Modifier.size(if (compact) 14.dp else 17.dp), warning)
             }
-            Spacer(Modifier.width(10.dp))
+            Spacer(Modifier.width(if (compact) 8.dp else 10.dp))
             Column(Modifier.weight(1f)) {
                 Text(
                     title,
-                    style = MaterialTheme.typography.labelLarge,
+                    style = if (compact) {
+                        MaterialTheme.typography.labelMedium
+                    } else {
+                        MaterialTheme.typography.labelLarge
+                    },
                     color = colors.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                Spacer(Modifier.height(2.dp))
-                Text(
-                    message,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = colors.onSurfaceVariant,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
+                if (!compact) {
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        message,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.onSurfaceVariant,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
             }
             Spacer(Modifier.width(8.dp))
             Text(
                 "Reschedule",
-                style = MaterialTheme.typography.labelMedium,
+                style = if (compact) {
+                    MaterialTheme.typography.labelSmall
+                } else {
+                    MaterialTheme.typography.labelMedium
+                },
                 fontWeight = FontWeight.SemiBold,
                 color = warning,
             )

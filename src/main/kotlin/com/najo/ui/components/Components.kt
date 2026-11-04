@@ -224,7 +224,7 @@ fun HeroCard(
                 .fillMaxWidth()
                 .padding(
                     horizontal = if (dense) 18.dp else if (compact) 20.dp else 28.dp,
-                    vertical = if (dense) 14.dp else if (compact) 18.dp else 24.dp,
+                    vertical = if (dense) 10.dp else if (compact) 18.dp else 24.dp,
                 ),
             verticalAlignment = Alignment.CenterVertically,
         ) {
