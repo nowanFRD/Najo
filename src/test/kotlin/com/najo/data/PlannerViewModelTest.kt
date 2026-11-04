@@ -9,7 +9,6 @@ import java.nio.file.Path
 import java.time.LocalDateTime
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
-import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -21,6 +20,44 @@ class PlannerViewModelTest {
     private val today = LocalDateTime.of(2026, 11, 1, 12, 0)
     private lateinit var store: PlannerStore
 
+    private val fixtureTasks = listOf(
+        PlanTask(
+            id = "morning",
+            title = "Morning pages",
+            startMinute = 8 * 60 + 30,
+            durationMinutes = 30,
+            priority = Priority.LOW,
+            done = true,
+        ),
+        PlanTask(
+            id = "plan",
+            title = "Plan the day",
+            startMinute = 9 * 60 + 15,
+            durationMinutes = 45,
+            done = true,
+        ),
+        PlanTask(
+            id = "deep",
+            title = "Deep work",
+            startMinute = 10 * 60,
+            durationMinutes = 90,
+            priority = Priority.HIGH,
+        ),
+        PlanTask(
+            id = "lunch",
+            title = "Lunch",
+            startMinute = 12 * 60 + 30,
+            durationMinutes = 45,
+            priority = Priority.LOW,
+        ),
+        PlanTask(
+            id = "review",
+            title = "Design review",
+            startMinute = 14 * 60,
+            durationMinutes = 60,
+        ),
+    )
+
     @BeforeEach
     fun setUp() {
         store = PlannerStore(directory.resolve("planner.json"))
@@ -28,17 +65,29 @@ class PlannerViewModelTest {
 
     private fun viewModel(now: LocalDateTime = today) = PlannerViewModel(store) { now }
 
+    /** Loads a predictable plan instead of relying on production sample data. */
+    private fun plannedViewModel(now: LocalDateTime = today): PlannerViewModel {
+        store.save(
+            PlannerFile(
+                day = now.toLocalDate().toString(),
+                tasks = fixtureTasks,
+            ),
+        )
+        return viewModel(now)
+    }
+
     @Test
-    fun `first launch seeds a sample day for today`() {
+    fun `first launch starts with a clean day`() {
         val vm = viewModel()
 
-        assertEquals(8, vm.tasks.size)
+        assertTrue(vm.tasks.isEmpty())
+        assertEquals(0, vm.stats().total)
         assertEquals(today.toLocalDate().toString(), store.load()?.day)
     }
 
     @Test
     fun `adding a task keeps the schedule ordered`() {
-        val vm = viewModel()
+        val vm = plannedViewModel()
         vm.openNewTask()
         vm.saveDraft(
             TaskDraft(
@@ -51,16 +100,16 @@ class PlannerViewModelTest {
         )
 
         val titles = vm.tasks.map { it.title }
-        assertEquals(9, titles.size)
+        assertEquals(6, titles.size)
         assertEquals("Stretch", titles[2])
-        assertEquals("Deep work — Najo roadmap", titles[3])
+        assertEquals("Deep work", titles[3])
         assertFalse(vm.editorOpen)
     }
 
     @Test
     fun `editing a task replaces its values`() {
-        val vm = viewModel()
-        val target = vm.tasks.first { it.title == "Design review with the team" }
+        val vm = plannedViewModel()
+        val target = vm.tasks.first { it.title == "Design review" }
 
         vm.openTask(target)
         vm.saveDraft(
@@ -83,7 +132,7 @@ class PlannerViewModelTest {
 
     @Test
     fun `ticking a task updates progress and survives a reload`() {
-        val vm = viewModel()
+        val vm = plannedViewModel()
         val task = vm.tasks.first { !it.done }
 
         vm.toggleDone(task.id)
@@ -95,7 +144,7 @@ class PlannerViewModelTest {
 
     @Test
     fun `filters expose only the requested tasks`() {
-        val vm = viewModel()
+        val vm = plannedViewModel()
 
         vm.selectFilter(TaskFilter.DONE)
         assertTrue(vm.visibleTasks().all { it.done })
@@ -103,26 +152,26 @@ class PlannerViewModelTest {
 
         vm.selectFilter(TaskFilter.TODO)
         assertTrue(vm.visibleTasks().none { it.done })
-        assertEquals(6, vm.visibleTasks().size)
+        assertEquals(3, vm.visibleTasks().size)
     }
 
     @Test
     fun `deleting and clearing keep the stats honest`() {
-        val vm = viewModel()
+        val vm = plannedViewModel()
         val done = vm.tasks.first { it.done }
 
         vm.delete(done.id)
-        assertEquals(7, vm.stats().total)
+        assertEquals(4, vm.stats().total)
 
         vm.clearCompleted()
-        assertEquals(6, vm.stats().total)
+        assertEquals(3, vm.stats().total)
         assertEquals(0, vm.stats().done)
-        assertEquals(0, vm.stats().progress.toInt())
+        assertEquals(0f, vm.stats().progress)
     }
 
     @Test
     fun `overlapping blocks are reported`() {
-        val vm = viewModel()
+        val vm = plannedViewModel()
         vm.openNewTask()
         vm.saveDraft(
             TaskDraft(
@@ -138,15 +187,15 @@ class PlannerViewModelTest {
         val conflicts = vm.conflictsFor(call)
 
         assertEquals(1, conflicts.size)
-        assertEquals("Deep work — Najo roadmap", conflicts.single().title)
+        assertEquals("Deep work", conflicts.single().title)
     }
 
     @Test
     fun `focus and next task follow the clock`() {
-        val vm = viewModel()
+        val vm = plannedViewModel()
 
-        assertEquals("Deep work — Najo roadmap", vm.activeTask(10 * 60 + 15)?.title)
-        assertEquals("Lunch & a short walk", vm.nextTask(10 * 60 + 15)?.title)
+        assertEquals("Deep work", vm.activeTask(10 * 60 + 15)?.title)
+        assertEquals("Lunch", vm.nextTask(10 * 60 + 15)?.title)
         assertNull(vm.activeTask(23 * 60))
     }
 
@@ -183,20 +232,20 @@ class PlannerViewModelTest {
 
     @Test
     fun `stats add up the planned minutes`() {
-        val stats = viewModel().stats()
+        val stats = plannedViewModel().stats()
 
-        assertEquals(8, stats.total)
+        assertEquals(5, stats.total)
         assertEquals(2, stats.done)
-        assertEquals(6, stats.todo)
-        assertEquals(390, stats.plannedMinutes)
+        assertEquals(3, stats.todo)
+        assertEquals(270, stats.plannedMinutes)
         assertEquals(75, stats.doneMinutes)
-        assertEquals(315, stats.remainingMinutes)
-        assertNotNull(stats.progress)
+        assertEquals(195, stats.remainingMinutes)
+        assertTrue(stats.progress > 0f)
     }
 
     @Test
     fun `a custom block longer than two hours survives a save`() {
-        val vm = viewModel()
+        val vm = plannedViewModel()
         vm.openNewTask()
         vm.saveDraft(
             TaskDraft(
@@ -209,7 +258,7 @@ class PlannerViewModelTest {
         )
 
         assertEquals(240, vm.tasks.first { it.title == "Workshop" }.durationMinutes)
-        assertEquals(390 + 240, vm.stats().plannedMinutes)
+        assertEquals(270 + 240, vm.stats().plannedMinutes)
         assertEquals(
             240,
             store.load()!!.tasks.first { it.title == "Workshop" }.durationMinutes,
@@ -218,17 +267,17 @@ class PlannerViewModelTest {
 
     @Test
     fun `overdue tasks are the unfinished blocks whose time has passed`() {
-        val overdue = viewModel().overdueTasks(14 * 60)
+        val overdue = plannedViewModel().overdueTasks(14 * 60)
 
         assertEquals(
-            listOf("Deep work — Najo roadmap", "Lunch & a short walk"),
+            listOf("Deep work", "Lunch"),
             overdue.map { it.title },
         )
     }
 
     @Test
     fun `a finished task starts and keeps a daily streak`() {
-        val vm = viewModel()
+        val vm = plannedViewModel()
         assertEquals(0, vm.streak)
         assertFalse(vm.hasCompletedToday())
 
@@ -252,7 +301,7 @@ class PlannerViewModelTest {
     @Test
     fun `a streak grows across back to back days`() {
         val dayOne = LocalDateTime.of(2026, 11, 1, 12, 0)
-        val first = PlannerViewModel(store) { dayOne }
+        val first = plannedViewModel(dayOne)
         first.toggleDone(first.tasks.first { !it.done }.id)
         assertEquals(1, first.streak)
 
@@ -268,7 +317,7 @@ class PlannerViewModelTest {
     @Test
     fun `a skipped day resets the streak but keeps the best`() {
         val dayOne = LocalDateTime.of(2026, 11, 1, 12, 0)
-        val first = PlannerViewModel(store) { dayOne }
+        val first = plannedViewModel(dayOne)
         first.toggleDone(first.tasks.first { !it.done }.id)
 
         val dayThree = PlannerViewModel(store) { dayOne.plusDays(2) }

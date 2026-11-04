@@ -257,10 +257,17 @@ fun HeroCard(
                 Spacer(Modifier.height(if (dense) 4.dp else if (compact) 6.dp else 8.dp))
                 Text(
                     buildString {
-                        append("${stats.todo} tasks ahead")
+                        append(
+                            when {
+                                stats.total == 0 -> "No tasks yet"
+                                stats.todo == 0 -> "All tasks done"
+                                stats.todo == 1 -> "1 task ahead"
+                                else -> "${stats.todo} tasks ahead"
+                            },
+                        )
                         append("  ·  ")
                         append("${formatDuration(stats.plannedMinutes)} planned")
-                        if (stats.done > 0 && !compact) {
+                        if (stats.done > 0 && stats.todo > 0 && !compact) {
                             append("  ·  ")
                             append("${stats.done} done")
                         }

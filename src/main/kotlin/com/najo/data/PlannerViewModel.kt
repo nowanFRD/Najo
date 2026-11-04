@@ -85,13 +85,9 @@ class PlannerViewModel(
             ?.takeIf { !it.isBefore(todayDate.minusDays(1)) }
         streak = if (lastStreakDay == null) 0 else saved?.streak ?: 0
         if (streak > bestStreak) bestStreak = streak
-        // Only the very first launch gets a sample day. Once there is a plan,
-        // keep it across days instead of silently replacing the user's tasks.
-        tasks = if (saved == null) {
-            seedDay()
-        } else {
-            saved.tasks.sortedBy { it.startMinute }
-        }
+        // A first launch starts with a clean day; never inject demo tasks into
+        // someone's plan.
+        tasks = saved?.tasks?.sortedBy { it.startMinute }.orEmpty()
         persist()
     }
 
@@ -190,12 +186,6 @@ class PlannerViewModel(
         persist()
     }
 
-    fun restoreSampleDay() {
-        tasks = seedDay()
-        filter = TaskFilter.ALL
-        persist()
-    }
-
     fun visibleTasks(): List<PlanTask> {
         val sorted = tasks.sortedBy { it.startMinute }
         return when (filter) {
@@ -222,61 +212,6 @@ class PlannerViewModel(
 
     fun nextTask(minuteOfDay: Int): PlanTask? =
         tasks.sortedBy { it.startMinute }.firstOrNull { !it.done && it.startMinute > minuteOfDay }
-
-    private fun seedDay(): List<PlanTask> = listOf(
-        PlanTask(
-            title = "Morning pages & coffee",
-            startMinute = 8 * 60 + 30,
-            durationMinutes = 30,
-            priority = Priority.LOW,
-            done = true,
-        ),
-        PlanTask(
-            title = "Plan the day, clear the inbox",
-            startMinute = 9 * 60 + 15,
-            durationMinutes = 45,
-            priority = Priority.NORMAL,
-            done = true,
-            note = "Pick three things that matter.",
-        ),
-        PlanTask(
-            title = "Deep work — Najo roadmap",
-            startMinute = 10 * 60,
-            durationMinutes = 90,
-            priority = Priority.HIGH,
-            note = "Phone in the drawer. One tab at a time.",
-        ),
-        PlanTask(
-            title = "Lunch & a short walk",
-            startMinute = 12 * 60 + 30,
-            durationMinutes = 45,
-            priority = Priority.LOW,
-        ),
-        PlanTask(
-            title = "Design review with the team",
-            startMinute = 14 * 60,
-            durationMinutes = 60,
-            priority = Priority.NORMAL,
-        ),
-        PlanTask(
-            title = "Ship the weekly update",
-            startMinute = 16 * 60,
-            durationMinutes = 45,
-            priority = Priority.HIGH,
-        ),
-        PlanTask(
-            title = "Evening reset — tidy desk",
-            startMinute = 18 * 60,
-            durationMinutes = 30,
-            priority = Priority.LOW,
-        ),
-        PlanTask(
-            title = "Read, no screens",
-            startMinute = 20 * 60 + 30,
-            durationMinutes = 45,
-            priority = Priority.LOW,
-        ),
-    )
 
     private fun TaskDraft.toTask() = PlanTask(
         title = title,

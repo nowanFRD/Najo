@@ -29,7 +29,9 @@ runs as an **Android app** and a **desktop app**.
   and a compact hero in landscape.
 - Saves locally as readable JSON — atomic temp-file + move writes, so a crash
   cannot leave a half-written plan. Your tasks stay put across launches and
-  calendar days; the sample plan is seeded only on the very first launch.
+  calendar days.
+- Starts with a clean day and a friendly empty state — no demo tasks are
+  injected into your plan.
 
 Screenshots for [dark mode](docs/desktop-dark.png), the
 [desktop editor](docs/desktop-dialog.png), the
@@ -110,9 +112,9 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 - The blue Material 3 palette, type scale and shapes are defined once in
   `ui/theme/Theme.kt` and shared.
 
-When the app is opened for the first time it starts with a small sample plan, so
-the timeline is never intimidatingly empty. After that, the saved plan is kept
-across days and only changes when you edit it.
+When the app is opened it shows your saved plan, or a clean empty day on first
+launch. Nothing is pre-filled; the empty state offers a single "Add a task"
+action to get started.
 
 ## Tests
 
@@ -121,6 +123,6 @@ gradle test
 ```
 
 Covers store round-trips, damaged-file recovery, parent-directory creation,
-ordering, filters, stats, overlap detection, theme/completion persistence,
-streak growth and reset, overdue-block detection, and day rollover (saved tasks
-are kept, not replaced).
+empty first launch, ordering, filters, stats, overlap detection,
+theme/completion persistence, streak growth and reset, overdue-block detection,
+and day rollover (saved tasks are kept, not replaced).
