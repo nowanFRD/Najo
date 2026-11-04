@@ -14,6 +14,9 @@ data class PlannerFile(
     val day: String = "",
     val darkTheme: Boolean = false,
     val tasks: List<PlanTask> = emptyList(),
+    val streak: Int = 0,
+    val bestStreak: Int = 0,
+    val lastStreakDay: String = "",
 )
 
 /**

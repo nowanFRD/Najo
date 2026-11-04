@@ -39,6 +39,7 @@ import com.najo.model.PlanTask
 import com.najo.ui.components.EmptyState
 import com.najo.ui.components.FilterBar
 import com.najo.ui.components.HeroCard
+import com.najo.ui.components.MotivationBanner
 import com.najo.ui.components.PlusIcon
 import com.najo.ui.components.SectionHeader
 import com.najo.ui.components.StatsPanel
@@ -62,6 +63,7 @@ fun PlannerScreen(vm: PlannerViewModel) {
     val day = LocalDate.now()
     val stats = vm.stats()
     val visible = vm.visibleTasks()
+    val overdue = vm.overdueTasks(nowMinute)
     val grouped = visible.groupBy { DaySection.of(it.startMinute) }
     val counts = mapOf(
         TaskFilter.ALL to stats.total,
@@ -105,6 +107,7 @@ fun PlannerScreen(vm: PlannerViewModel) {
                 date = day,
                 greeting = greeting(nowMinute / 60),
                 stats = stats,
+                streak = vm.streak,
                 onAddTask = vm::openNewTask,
                 compact = compact,
                 dense = dense,
@@ -120,6 +123,10 @@ fun PlannerScreen(vm: PlannerViewModel) {
             )
 
             if (compact) {
+                if (overdue.isNotEmpty()) {
+                    MotivationBanner(overdue = overdue, onOpenTask = vm::openTask)
+                    Spacer(Modifier.height(if (dense) 8.dp else 10.dp))
+                }
                 FilterBar(
                     selected = vm.filter,
                     counts = counts,
@@ -137,6 +144,10 @@ fun PlannerScreen(vm: PlannerViewModel) {
             } else {
                 Row(Modifier.fillMaxSize()) {
                     Column(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                        if (overdue.isNotEmpty()) {
+                            MotivationBanner(overdue = overdue, onOpenTask = vm::openTask)
+                            Spacer(Modifier.height(10.dp))
+                        }
                         FilterBar(
                             selected = vm.filter,
                             counts = counts,
@@ -157,6 +168,10 @@ fun PlannerScreen(vm: PlannerViewModel) {
                         nowMinute = nowMinute,
                         tasks = vm.tasks,
                         stats = stats,
+                        streak = vm.streak,
+                        bestStreak = vm.bestStreak,
+                        lastStreakDay = vm.lastStreakDay,
+                        today = day,
                         storagePath = vm.storagePath,
                         modifier = Modifier.width(334.dp).fillMaxHeight(),
                     )

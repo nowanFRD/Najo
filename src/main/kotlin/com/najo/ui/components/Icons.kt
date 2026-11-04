@@ -180,6 +180,27 @@ fun SparkIcon(modifier: Modifier = Modifier, color: Color) {
     }
 }
 
+/** A soft filled flame for streak counters. */
+@Composable
+fun FlameIcon(modifier: Modifier = Modifier, color: Color) {
+    Canvas(modifier) {
+        val w = size.width
+        val h = size.height
+        val flame = Path().apply {
+            moveTo(w * 0.53f, h * 0.03f)
+            cubicTo(w * 0.55f, h * 0.20f, w * 0.64f, h * 0.28f, w * 0.72f, h * 0.36f)
+            cubicTo(w * 0.86f, h * 0.50f, w * 0.90f, h * 0.66f, w * 0.80f, h * 0.80f)
+            cubicTo(w * 0.68f, h * 0.98f, w * 0.38f, h * 0.99f, w * 0.24f, h * 0.84f)
+            cubicTo(w * 0.10f, h * 0.68f, w * 0.12f, h * 0.48f, w * 0.28f, h * 0.34f)
+            cubicTo(w * 0.34f, h * 0.29f, w * 0.38f, h * 0.22f, w * 0.40f, h * 0.13f)
+            cubicTo(w * 0.46f, h * 0.23f, w * 0.50f, h * 0.30f, w * 0.51f, h * 0.37f)
+            cubicTo(w * 0.50f, h * 0.26f, w * 0.51f, h * 0.14f, w * 0.53f, h * 0.03f)
+            close()
+        }
+        drawPath(flame, color)
+    }
+}
+
 @Composable
 fun NajoMark(modifier: Modifier = Modifier, background: Color, foreground: Color) {
     Canvas(modifier) {

@@ -195,6 +195,7 @@ fun HeroCard(
     date: LocalDate,
     greeting: String,
     stats: DayStats,
+    streak: Int,
     onAddTask: () -> Unit,
     compact: Boolean = false,
     dense: Boolean = false,
@@ -228,15 +229,22 @@ fun HeroCard(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                if (!dense) {
-                    Text(
-                        formatDateUpper(date),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Color.White.copy(alpha = 0.72f),
-                        letterSpacing = 1.4.sp,
-                    )
-                    Spacer(Modifier.height(6.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    if (!dense) {
+                        Text(
+                            formatDateUpper(date),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color.White.copy(alpha = 0.72f),
+                            letterSpacing = 1.4.sp,
+                        )
+                    }
+                    Spacer(Modifier.weight(1f))
+                    StreakBadge(streak = streak, compact = compact)
                 }
+                Spacer(Modifier.height(if (dense) 4.dp else 6.dp))
                 Text(
                     "$greeting.",
                     style = when {
@@ -458,6 +466,10 @@ fun StatsPanel(
     nowMinute: Int,
     tasks: List<PlanTask>,
     stats: DayStats,
+    streak: Int,
+    bestStreak: Int,
+    lastStreakDay: LocalDate?,
+    today: LocalDate,
     storagePath: String,
     modifier: Modifier = Modifier,
 ) {
@@ -467,6 +479,12 @@ fun StatsPanel(
             .padding(bottom = 4.dp, end = 2.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
+        StreakCard(
+            streak = streak,
+            bestStreak = bestStreak,
+            lastStreakDay = lastStreakDay,
+            today = today,
+        )
         FocusCard(nowMinute = nowMinute, tasks = tasks)
         ProgressCard(stats = stats)
         TimelineCard(nowMinute = nowMinute, tasks = tasks)

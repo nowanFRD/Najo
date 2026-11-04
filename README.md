@@ -18,12 +18,18 @@ runs as an **Android app** and a **desktop app**.
   priority counts.
 - Overlap warnings for double-booked time, priority-coloured accents, and
   spring-animated checkmarks.
+- A **daily streak** that grows when you finish at least one task. The flame
+  badge pops when it grows, and the side panel shows your best streak plus the
+  last seven days.
+- Gentle **missed-block nudges**: when a scheduled block ends without being
+  ticked, a warm message offers to reschedule it instead of guilt-tripping you.
 - Light and dark themes, remembered across launches.
 - Responsive layout: a stats side panel on wide screens; on phones a full-width
   list with a floating add button, a keyboard-aware editor with sticky actions,
   and a compact hero in landscape.
 - Saves locally as readable JSON — atomic temp-file + move writes, so a crash
-  cannot leave a half-written plan.
+  cannot leave a half-written plan. Your tasks stay put across launches and
+  calendar days; the sample plan is seeded only on the very first launch.
 
 Screenshots for [dark mode](docs/desktop-dark.png), the
 [desktop editor](docs/desktop-dialog.png), the
@@ -104,8 +110,9 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 - The blue Material 3 palette, type scale and shapes are defined once in
   `ui/theme/Theme.kt` and shared.
 
-When the app is opened on a new day it starts with a small sample plan, so the
-timeline is never intimidatingly empty.
+When the app is opened for the first time it starts with a small sample plan, so
+the timeline is never intimidatingly empty. After that, the saved plan is kept
+across days and only changes when you edit it.
 
 ## Tests
 
@@ -114,5 +121,6 @@ gradle test
 ```
 
 Covers store round-trips, damaged-file recovery, parent-directory creation,
-ordering, filters, stats, overlap detection, theme/completion persistence and
-day rollover.
+ordering, filters, stats, overlap detection, theme/completion persistence,
+streak growth and reset, overdue-block detection, and day rollover (saved tasks
+are kept, not replaced).

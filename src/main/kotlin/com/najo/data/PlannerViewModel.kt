@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.najo.model.PlanTask
 import com.najo.model.Priority
+import java.time.LocalDate
 import java.time.LocalDateTime
 
 enum class TaskFilter(val label: String) {
@@ -47,6 +48,16 @@ class PlannerViewModel(
     var darkTheme by mutableStateOf(false)
         private set
 
+    /** Consecutive days with at least one finished task. */
+    var streak by mutableStateOf(0)
+        private set
+
+    var bestStreak by mutableStateOf(0)
+        private set
+
+    var lastStreakDay by mutableStateOf<LocalDate?>(null)
+        private set
+
     var filter by mutableStateOf(TaskFilter.ALL)
         private set
 
@@ -63,13 +74,23 @@ class PlannerViewModel(
     }
 
     private fun restore() {
-        val today = clock().toLocalDate().toString()
+        val todayDate = clock().toLocalDate()
         val saved = store.load()
         darkTheme = saved?.darkTheme ?: false
-        tasks = if (saved != null && saved.day == today) {
-            saved.tasks.sortedBy { it.startMinute }
-        } else {
+        bestStreak = saved?.bestStreak ?: 0
+        lastStreakDay = saved?.lastStreakDay
+            ?.takeIf { it.isNotBlank() }
+            ?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
+            // A streak stays alive while its last day is today or yesterday.
+            ?.takeIf { !it.isBefore(todayDate.minusDays(1)) }
+        streak = if (lastStreakDay == null) 0 else saved?.streak ?: 0
+        if (streak > bestStreak) bestStreak = streak
+        // Only the very first launch gets a sample day. Once there is a plan,
+        // keep it across days instead of silently replacing the user's tasks.
+        tasks = if (saved == null) {
             seedDay()
+        } else {
+            saved.tasks.sortedBy { it.startMinute }
         }
         persist()
     }
@@ -80,6 +101,9 @@ class PlannerViewModel(
                 day = clock().toLocalDate().toString(),
                 darkTheme = darkTheme,
                 tasks = tasks,
+                streak = streak,
+                bestStreak = bestStreak,
+                lastStreakDay = lastStreakDay?.toString().orEmpty(),
             ),
         )
     }
@@ -132,9 +156,28 @@ class PlannerViewModel(
     }
 
     fun toggleDone(id: String) {
-        tasks = tasks.map { if (it.id == id) it.copy(done = !it.done) else it }
+        val current = tasks.firstOrNull { it.id == id } ?: return
+        val nowDone = !current.done
+        tasks = tasks.map { if (it.id == id) it.copy(done = nowDone) else it }
+        if (nowDone) extendStreak()
         persist()
     }
+
+    /** One completion a day is enough to keep the flame going. */
+    private fun extendStreak() {
+        val today = clock().toLocalDate()
+        val last = lastStreakDay
+        if (last == today) return
+        streak = if (last == today.minusDays(1)) streak + 1 else 1
+        lastStreakDay = today
+        if (streak > bestStreak) bestStreak = streak
+    }
+
+    fun hasCompletedToday(): Boolean = lastStreakDay == clock().toLocalDate()
+
+    /** Unfinished blocks whose scheduled time has already passed. */
+    fun overdueTasks(nowMinute: Int): List<PlanTask> =
+        tasks.filter { !it.done && it.endMinute <= nowMinute }.sortedBy { it.startMinute }
 
     fun delete(id: String) {
         tasks = tasks.filterNot { it.id == id }

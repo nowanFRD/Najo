@@ -1,5 +1,6 @@
 package com.najo.data
 
+import com.najo.model.PlanTask
 import com.najo.model.Priority
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -150,12 +151,24 @@ class PlannerViewModelTest {
     }
 
     @Test
-    fun `a plan from another day starts fresh`() {
-        store.save(PlannerFile(day = "2020-01-01", darkTheme = true, tasks = emptyList()))
+    fun `a plan from another day is kept instead of replaced`() {
+        store.save(
+            PlannerFile(
+                day = "2020-01-01",
+                darkTheme = true,
+                tasks = listOf(
+                    PlanTask(
+                        title = "Carry over",
+                        startMinute = 9 * 60,
+                        durationMinutes = 30,
+                    ),
+                ),
+            ),
+        )
 
         val vm = viewModel()
 
-        assertEquals(8, vm.tasks.size)
+        assertEquals(listOf("Carry over"), vm.tasks.map { it.title })
         assertTrue(vm.darkTheme)
         assertEquals(today.toLocalDate().toString(), store.load()?.day)
     }
@@ -201,5 +214,70 @@ class PlannerViewModelTest {
             240,
             store.load()!!.tasks.first { it.title == "Workshop" }.durationMinutes,
         )
+    }
+
+    @Test
+    fun `overdue tasks are the unfinished blocks whose time has passed`() {
+        val overdue = viewModel().overdueTasks(14 * 60)
+
+        assertEquals(
+            listOf("Deep work — Najo roadmap", "Lunch & a short walk"),
+            overdue.map { it.title },
+        )
+    }
+
+    @Test
+    fun `a finished task starts and keeps a daily streak`() {
+        val vm = viewModel()
+        assertEquals(0, vm.streak)
+        assertFalse(vm.hasCompletedToday())
+
+        val first = vm.tasks.first { !it.done }
+        vm.toggleDone(first.id)
+
+        assertEquals(1, vm.streak)
+        assertTrue(vm.hasCompletedToday())
+        assertEquals(1, PlannerStore(store.location).load()!!.streak)
+
+        val second = vm.tasks.first { !it.done }
+        vm.toggleDone(second.id)
+        assertEquals(1, vm.streak)
+
+        // Un-ticking does not take back a flame that was already earned today.
+        vm.toggleDone(first.id)
+        assertFalse(vm.tasks.first { it.id == first.id }.done)
+        assertEquals(1, vm.streak)
+    }
+
+    @Test
+    fun `a streak grows across back to back days`() {
+        val dayOne = LocalDateTime.of(2026, 11, 1, 12, 0)
+        val first = PlannerViewModel(store) { dayOne }
+        first.toggleDone(first.tasks.first { !it.done }.id)
+        assertEquals(1, first.streak)
+
+        val dayTwo = PlannerViewModel(store) { dayOne.plusDays(1) }
+        assertEquals(1, dayTwo.streak)
+        assertFalse(dayTwo.hasCompletedToday())
+
+        dayTwo.toggleDone(dayTwo.tasks.first { !it.done }.id)
+        assertEquals(2, dayTwo.streak)
+        assertEquals(2, dayTwo.bestStreak)
+    }
+
+    @Test
+    fun `a skipped day resets the streak but keeps the best`() {
+        val dayOne = LocalDateTime.of(2026, 11, 1, 12, 0)
+        val first = PlannerViewModel(store) { dayOne }
+        first.toggleDone(first.tasks.first { !it.done }.id)
+
+        val dayThree = PlannerViewModel(store) { dayOne.plusDays(2) }
+        assertEquals(0, dayThree.streak)
+        assertEquals(1, dayThree.bestStreak)
+        assertFalse(dayThree.hasCompletedToday())
+
+        dayThree.toggleDone(dayThree.tasks.first { !it.done }.id)
+        assertEquals(1, dayThree.streak)
+        assertEquals(1, dayThree.bestStreak)
     }
 }
