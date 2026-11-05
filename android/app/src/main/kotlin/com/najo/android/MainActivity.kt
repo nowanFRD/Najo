@@ -5,12 +5,15 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.ui.res.painterResource
 import androidx.core.view.WindowCompat
 import com.najo.data.PlannerStore
 import com.najo.data.PlannerViewModel
 import com.najo.ui.PlannerScreen
+import com.najo.ui.components.LocalBrandPainter
 import com.najo.ui.theme.NajoTheme
 import java.io.File
 
@@ -41,7 +44,11 @@ class MainActivity : ComponentActivity() {
             }
 
             NajoTheme(darkTheme = dark) {
-                PlannerScreen(viewModel)
+                CompositionLocalProvider(
+                    LocalBrandPainter provides painterResource(R.drawable.najo_icon),
+                ) {
+                    PlannerScreen(viewModel)
+                }
             }
         }
     }

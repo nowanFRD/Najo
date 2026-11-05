@@ -1,5 +1,6 @@
 package com.najo
 
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.painter.BitmapPainter
@@ -20,6 +21,7 @@ import androidx.compose.ui.window.rememberWindowState
 import com.najo.data.PlannerStore
 import com.najo.data.PlannerViewModel
 import com.najo.ui.PlannerScreen
+import com.najo.ui.components.LocalBrandPainter
 import com.najo.ui.theme.NajoTheme
 import java.awt.Dimension
 
@@ -56,7 +58,9 @@ fun main() = application {
             window.minimumSize = Dimension(1000, 700)
         }
         NajoTheme(darkTheme = viewModel.darkTheme) {
-            PlannerScreen(viewModel)
+            CompositionLocalProvider(LocalBrandPainter provides icon) {
+                PlannerScreen(viewModel)
+            }
         }
     }
 }

@@ -4,6 +4,7 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.hoverable
@@ -34,6 +35,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -46,6 +48,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -76,8 +80,12 @@ fun priorityColor(priority: Priority): Color = when (priority) {
 /*  Brand                                                                     */
 /* ------------------------------------------------------------------------- */
 
+/** The launcher artwork, supplied by each platform; null keeps the vector fallback. */
+val LocalBrandPainter = staticCompositionLocalOf<Painter?> { null }
+
 @Composable
 fun BrandMark(modifier: Modifier = Modifier, size: Dp = 40.dp) {
+    val painter = LocalBrandPainter.current
     Box(
         modifier = modifier
             .size(size)
@@ -85,7 +93,16 @@ fun BrandMark(modifier: Modifier = Modifier, size: Dp = 40.dp) {
             .background(Brush.linearGradient(listOf(Color(0xFF1D4ED8), Color(0xFF60A5FA)))),
         contentAlignment = Alignment.Center,
     ) {
-        NajoMark(Modifier.size(size * 0.62f), Color.Transparent, Color.White)
+        if (painter != null) {
+            Image(
+                painter = painter,
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop,
+            )
+        } else {
+            NajoMark(Modifier.size(size * 0.62f), Color.Transparent, Color.White)
+        }
     }
 }
 
