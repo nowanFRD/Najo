@@ -127,6 +127,7 @@ fun PlannerScreen(vm: PlannerViewModel) {
                     MotivationBanner(
                         overdue = overdue,
                         onOpenTask = vm::openTask,
+                        onMoveToNow = vm::moveToNow,
                         compact = dense,
                     )
                     Spacer(Modifier.height(if (dense) 6.dp else 10.dp))
@@ -149,7 +150,11 @@ fun PlannerScreen(vm: PlannerViewModel) {
                 Row(Modifier.fillMaxSize()) {
                     Column(modifier = Modifier.weight(1f).fillMaxHeight()) {
                         if (overdue.isNotEmpty()) {
-                            MotivationBanner(overdue = overdue, onOpenTask = vm::openTask)
+                            MotivationBanner(
+                                overdue = overdue,
+                                onOpenTask = vm::openTask,
+                                onMoveToNow = vm::moveToNow,
+                            )
                             Spacer(Modifier.height(10.dp))
                         }
                         FilterBar(

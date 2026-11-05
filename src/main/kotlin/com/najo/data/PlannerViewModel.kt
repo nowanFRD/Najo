@@ -175,6 +175,22 @@ class PlannerViewModel(
     fun overdueTasks(nowMinute: Int): List<PlanTask> =
         tasks.filter { !it.done && it.endMinute <= nowMinute }.sortedBy { it.startMinute }
 
+    /**
+     * Pulls a slipped block to the next five-minute mark, keeping its length.
+     * This is the one-tap recovery offered by the missed-block banner.
+     */
+    fun moveToNow(id: String) {
+        val task = tasks.firstOrNull { it.id == id } ?: return
+        if (task.done) return
+        val now = clock()
+        val minute = now.hour * 60 + now.minute
+        val start = (((minute + 4) / 5) * 5).coerceAtMost(23 * 60 + 55)
+        tasks = tasks
+            .map { if (it.id == id) it.copy(startMinute = start) else it }
+            .sortedBy { it.startMinute }
+        persist()
+    }
+
     fun delete(id: String) {
         tasks = tasks.filterNot { it.id == id }
         if (editingTask?.id == id) closeEditor()

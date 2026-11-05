@@ -261,8 +261,8 @@ fun HeroCard(
                             when {
                                 stats.total == 0 -> "No tasks yet"
                                 stats.todo == 0 -> "All tasks done"
-                                stats.todo == 1 -> "1 task ahead"
-                                else -> "${stats.todo} tasks ahead"
+                                stats.todo == 1 -> "1 task left"
+                                else -> "${stats.todo} tasks left"
                             },
                         )
                         append("  ·  ")

@@ -45,7 +45,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.najo.model.PlanTask
 import com.najo.ui.theme.NajoPalette
-import com.najo.util.formatTime
 import kotlinx.coroutines.delay
 import java.time.LocalDate
 import java.time.format.TextStyle
@@ -298,6 +297,7 @@ private fun WeekDots(today: LocalDate, lastStreakDay: LocalDate?, streak: Int) {
 fun MotivationBanner(
     overdue: List<PlanTask>,
     onOpenTask: (PlanTask) -> Unit,
+    onMoveToNow: (String) -> Unit,
     compact: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
@@ -306,13 +306,20 @@ fun MotivationBanner(
     val colors = MaterialTheme.colorScheme
     val warning = NajoPalette.extras.warning
     val first = overdue.first()
+    val single = overdue.size == 1
     val message = remember(overdue.size, first.id) {
         MissedMessages[(overdue.size + first.startMinute) % MissedMessages.size]
     }
-    val title = if (overdue.size == 1) {
-        "The ${formatTime(first.startMinute)} block slipped by"
+    val title = if (single) {
+        "${first.title} slipped by"
     } else {
         "${overdue.size} blocks slipped by"
+    }
+    val action = if (single) "Move to now" else "Reschedule"
+    val actionLabel = if (single) {
+        "Move ${first.title} to now"
+    } else {
+        "Reschedule ${first.title}"
     }
 
     Surface(
@@ -321,8 +328,10 @@ fun MotivationBanner(
             .clip(RoundedCornerShape(16.dp))
             .clickable(
                 role = Role.Button,
-                onClickLabel = "Reschedule ${first.title}",
-            ) { onOpenTask(first) },
+                onClickLabel = actionLabel,
+            ) {
+                if (single) onMoveToNow(first.id) else onOpenTask(first)
+            },
         shape = RoundedCornerShape(16.dp),
         color = colors.surface,
         border = BorderStroke(1.dp, warning.copy(alpha = 0.35f)),
@@ -371,7 +380,7 @@ fun MotivationBanner(
             }
             Spacer(Modifier.width(8.dp))
             Text(
-                "Reschedule",
+                action,
                 style = if (compact) {
                     MaterialTheme.typography.labelSmall
                 } else {

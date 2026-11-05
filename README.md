@@ -22,7 +22,8 @@ runs as an **Android app** and a **desktop app**.
   badge pops when it grows, and the side panel shows your best streak plus the
   last seven days.
 - Gentle **missed-block nudges**: when a scheduled block ends without being
-  ticked, a warm message offers to reschedule it instead of guilt-tripping you.
+  ticked, a warm message names it and can move it to the current time in one
+  tap instead of guilt-tripping you.
 - Light and dark themes, remembered across launches.
 - Responsive layout: a stats side panel on wide screens; on phones a full-width
   list with a floating add button, a keyboard-aware editor with sticky actions,
@@ -125,4 +126,4 @@ gradle test
 Covers store round-trips, damaged-file recovery, parent-directory creation,
 empty first launch, ordering, filters, stats, overlap detection,
 theme/completion persistence, streak growth and reset, overdue-block detection,
-and day rollover (saved tasks are kept, not replaced).
+one-tap recovery, and day rollover (saved tasks are kept, not replaced).

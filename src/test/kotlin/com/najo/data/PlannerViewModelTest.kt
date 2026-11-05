@@ -276,6 +276,22 @@ class PlannerViewModelTest {
     }
 
     @Test
+    fun `moving a slipped block to now clears the nudge`() {
+        val now = LocalDateTime.of(2026, 11, 1, 12, 2)
+        val vm = plannedViewModel(now)
+        val slipped = vm.tasks.first { it.title == "Deep work" }
+
+        assertTrue(vm.overdueTasks(12 * 60 + 2).any { it.id == slipped.id })
+
+        vm.moveToNow(slipped.id)
+
+        val moved = vm.tasks.first { it.id == slipped.id }
+        assertEquals(12 * 60 + 5, moved.startMinute)
+        assertFalse(vm.overdueTasks(12 * 60 + 5).any { it.id == slipped.id })
+        assertEquals(12 * 60 + 30, vm.tasks.first { it.title == "Lunch" }.startMinute)
+    }
+
+    @Test
     fun `a finished task starts and keeps a daily streak`() {
         val vm = plannedViewModel()
         assertEquals(0, vm.streak)
